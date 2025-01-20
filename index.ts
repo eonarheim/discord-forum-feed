@@ -1,4 +1,5 @@
 import { Client, Events, GatewayIntentBits, Message } from 'discord.js'
+import stripEmoji from 'emoji-strip'
 
 if (
   !process.env.DISCORD_TOKEN ||
@@ -39,9 +40,9 @@ export const connectDiscord = () => {
           : // @ts-expect-error
             message.channel.name
 
-      const destinationMessage = `[${truncatedChannelName}](<${createMessageLink(message)}>) | **${
-        message.author.username
-      }**: ${message.content}`
+      const destinationMessage = `[${stripEmoji(truncatedChannelName)}](<${createMessageLink(
+        message
+      )}>) | **${message.author.username}**: ${message.content}`
       const destinationChannel = await client.channels.fetch(destinationChannelId)
       if (!destinationChannel) return
       // @ts-expect-error
