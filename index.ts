@@ -70,7 +70,7 @@ export const connectDiscord = () => {
       const truncatedContent =
         message.content.length > 200 ? message.content.slice(0, 195) + '[...]' : message.content
 
-      const destinationMessage = `**${message.author.username}**: ${stripMentions(
+      const destinationMessage = `**${message.author.displayName}**: ${stripMentions(
         truncatedContent
       )}`
 
