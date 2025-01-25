@@ -18,11 +18,13 @@ const sourceChannelId = process.env.SOURCE_CHANNEL_ID
 const destinationChannelId = process.env.DESTINATION_CHANNEL_ID
 
 const createMessageLink = (message: Message) =>
-  `https://discord.com/channels/${serverId}/${message.channelId}/${message.id}`
+  `https://discord.com/channels/${serverId}/${message.channelId}`
 
 const stripMentions = (content: string) => content.replace(/<@!?\d+>/g, '`@mention`')
 
-const rateLimiter = new RateLimiterMemory({ points: 6, duration: 60 * 60 * 4 }) // 6 messages per 4 hours
+const rateLimiter = new RateLimiterMemory({ points: 5, duration: 60 * 60 * 5 }) // 5 messages per 5 hours
+
+let lastThreadId: string | null = null
 
 export const connectDiscord = () => {
   const client = new Client({
@@ -40,33 +42,49 @@ export const connectDiscord = () => {
 
     if (error) return
 
+    const destinationChannel = await client.channels.fetch(destinationChannelId)
+    if (!destinationChannel) return
+
+    if (message.content.length === 0 && message.attachments.size === 0) return
+
     // @ts-expect-error
     if (message.channel.parentId === sourceChannelId) {
       const truncatedChannelName =
         // @ts-expect-error
-        message.channel.name.length > 30
+        message.channel.name.length > 40
           ? // @ts-expect-error
-            message.channel.name.slice(0, 27) + '...'
+            message.channel.name.slice(0, 35) + '[...]'
           : // @ts-expect-error
             message.channel.name
 
+      if (lastThreadId !== message.channelId) {
+        // @ts-expect-error
+        await destinationChannel.send(
+          `🧵 ${stripEmoji(
+            `[${truncatedChannelName}](<https://discord.com/channels/${serverId}/${message.channelId}>)`
+          )}`
+        )
+        lastThreadId = message.channelId
+      }
+
       const truncatedContent =
-        message.content.length > 300 ? message.content.slice(0, 297) + '...' : message.content
+        message.content.length > 200 ? message.content.slice(0, 195) + '[...]' : message.content
 
-      const destinationMessage = `[${stripEmoji(truncatedChannelName)}](<${createMessageLink(
-        message
-      )}>) | **${message.author.username}**: ${stripMentions(truncatedContent)}`
+      const destinationMessage = `**${message.author.username}**: ${stripMentions(
+        truncatedContent
+      )}`
 
-      const destinationChannel = await client.channels.fetch(destinationChannelId)
-      if (!destinationChannel) return
       // @ts-expect-error
-      await destinationChannel.send(destinationMessage)
+      await destinationChannel.send({
+        content: destinationMessage,
+        files: message.attachments.map(attachment => ({ attachment: attachment.url })),
+      })
       if (result.remainingPoints === 0) {
         // @ts-expect-error
         await destinationChannel.send(
-          `Message forwarding from this thread is paused for a bit, [check the full conversation](<${createMessageLink(
+          `Message forwarding for this [thread](<${createMessageLink(
             message
-          )}>).`
+          )}>) is paused for a bit.`
         )
       }
     }
