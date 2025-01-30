@@ -60,9 +60,9 @@ export const connectDiscord = () => {
       if (lastThreadId !== message.channelId) {
         // @ts-expect-error
         await destinationChannel.send(
-          `🧵 ${stripEmoji(
-            `[${truncatedChannelName}](<https://discord.com/channels/${serverId}/${message.channelId}>)`
-          )}`
+          `🧵 ${`[**${stripEmoji(
+            truncatedChannelName
+          ).trim()}**](<https://discord.com/channels/${serverId}/${message.channelId}>)`}`
         )
         lastThreadId = message.channelId
       }
