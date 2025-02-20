@@ -22,7 +22,7 @@ const createMessageLink = (message: Message) =>
 
 const stripMentions = (content: string) => content.replace(/<@!?\d+>/g, '`@mention`')
 
-const rateLimiter = new RateLimiterMemory({ points: 5, duration: 60 * 60 * 5 }) // 5 messages per 5 hours
+const rateLimiter = new RateLimiterMemory({ points: 4, duration: 60 * 60 * 12 }) // 4 messages per 12 hours
 
 let lastThreadId: string | null = null
 
@@ -82,9 +82,9 @@ export const connectDiscord = () => {
       if (result.remainingPoints === 0) {
         // @ts-expect-error
         await destinationChannel.send(
-          `Message forwarding for this [thread](<${createMessageLink(
+          `:zzz: Message forwarding for this [thread](<${createMessageLink(
             message
-          )}>) is paused for a bit.`
+          )}>) is paused for a bit!`
         )
       }
     }
