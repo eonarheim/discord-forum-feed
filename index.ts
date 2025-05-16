@@ -53,9 +53,9 @@ export const connectDiscord = () => {
         // @ts-expect-error
         message.channel.name.length > 40
           ? // @ts-expect-error
-            message.channel.name.slice(0, 35) + '[...]'
+          message.channel.name.slice(0, 35) + '[...]'
           : // @ts-expect-error
-            message.channel.name
+          message.channel.name
 
       if (lastThreadId !== message.channelId) {
         // @ts-expect-error
@@ -95,7 +95,11 @@ export const connectDiscord = () => {
   return () => client.destroy()
 }
 
-Bun.serve({ fetch: () => new Response('ok') })
+Bun.serve({
+  hostname: "0.0.0.0",
+  port: 8080,
+  fetch: () => new Response('ok')
+})
 
 const disconnectDiscord = connectDiscord()
 
