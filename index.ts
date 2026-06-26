@@ -7,7 +7,8 @@ if (
   !process.env.DISCORD_TOKEN ||
   !process.env.SERVER_ID ||
   !process.env.SOURCE_CHANNEL_ID ||
-  !process.env.DESTINATION_CHANNEL_ID
+  !process.env.DESTINATION_CHANNEL_ID ||
+  !process.env.HONEYPOT_CHANNEL_ID
 ) {
   throw new Error('Missing env variables')
 }
@@ -16,6 +17,7 @@ const discordToken = process.env.DISCORD_TOKEN
 const serverId = process.env.SERVER_ID
 const sourceChannelId = process.env.SOURCE_CHANNEL_ID
 const destinationChannelId = process.env.DESTINATION_CHANNEL_ID
+const honeypotChannelId = process.env.HONEYPOT_CHANNEL_ID
 
 const createMessageLink = (message: Message) =>
   `https://discord.com/channels/${serverId}/${message.channelId}`
@@ -38,6 +40,24 @@ export const connectDiscord = () => {
   client.once(Events.ClientReady, () => console.log(`Logged in to Discord as ${client.user?.tag}`))
 
   client.on(Events.MessageCreate, async message => {
+    if (message.channelId === honeypotChannelId) {
+      if (message.author.bot) return
+
+      const guild = message.guild ?? await client.guilds.fetch(serverId)
+      const username = message.author.username
+      const handle = message.author.tag
+
+      await mightFail(guild.members.ban(message.author, {
+        deleteMessageSeconds: 60 * 60 * 24,
+        reason: 'spam posting',
+      }))
+
+      await mightFail(message.channel.send(
+        `Found discord handle ${handle} (username: ${username}) guilty`
+      ))
+      return
+    }
+
     const [error, result] = await mightFail(rateLimiter.consume(message.channelId, 1))
 
     if (error) return
