@@ -1,4 +1,4 @@
-import { Client, Events, GatewayIntentBits, Message } from 'discord.js'
+import { Client, Events, GatewayIntentBits, Message, PermissionFlagsBits } from 'discord.js'
 import stripEmoji from 'emoji-strip'
 import { mightFail } from 'might-fail'
 import { RateLimiterMemory } from 'rate-limiter-flexible'
@@ -27,7 +27,6 @@ const stripMentions = (content: string) => content.replace(/<@!?\d+>/g, '`@menti
 const rateLimiter = new RateLimiterMemory({ points: 4, duration: 60 * 60 * 12 }) // 4 messages per 12 hours
 
 let lastThreadId: string | null = null
-
 export const connectDiscord = () => {
   const client = new Client({
     intents: [
@@ -43,9 +42,21 @@ export const connectDiscord = () => {
     if (message.channelId === honeypotChannelId) {
       if (message.author.bot) return
 
-      const guild = message.guild ?? await client.guilds.fetch(serverId)
-      const username = message.author.username
-      const handle = message.author.tag
+      const guild = message.guild ?? await client.guilds.fetch(serverId);
+      const username = message.author.username;
+      const handle = message.author.tag;
+      const member = message.member ?? await guild.members.fetch(message.author.id);
+      const isImmune = member.permissions.has(
+        PermissionFlagsBits.Administrator | 
+        PermissionFlagsBits.BanMembers | 
+        PermissionFlagsBits.KickMembers |
+        PermissionFlagsBits.ManageGuild
+      );
+
+      if (isImmune) {
+        console.log(`[IMMUNE]: handle ${handle} (username: ${username})`);
+        return;
+      }
 
       await mightFail(guild.members.ban(message.author, {
         deleteMessageSeconds: 60 * 60 * 24,
