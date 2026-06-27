@@ -33,6 +33,7 @@ export const connectDiscord = () => {
       GatewayIntentBits.Guilds,
       GatewayIntentBits.GuildMessages,
       GatewayIntentBits.MessageContent,
+      GatewayIntentBits.GuildModeration
     ],
   })
 
@@ -63,8 +64,10 @@ export const connectDiscord = () => {
         reason: 'spam posting',
       }))
 
+      console.log(`Found discord handle ${handle} (username: ${username}) guilty`);
+
       await mightFail(message.channel.send(
-        `Found discord handle ${handle} (username: ${username}) guilty`
+        `🔨 Found discord handle ${handle} (username: ${username}) guilty`
       ))
       return
     }
